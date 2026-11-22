@@ -1,26 +1,193 @@
 
-function turnOn() {
-    const status = document.getElementById("status");
-    const house = document.querySelector(".house");
-    const houseStatus = document.getElementById("houseStatus");
-
-    status.textContent = "ON";
-    status.classList.remove("off");
-    status.classList.add("on");
-
-    house.classList.add("lights-on");
-    houseStatus.textContent = "LIGHTS ARE ON";
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-function turnOff() {
-    const status = document.getElementById("status");
-    const house = document.querySelector(".house");
-    const houseStatus = document.getElementById("houseStatus");
+body {
+    font-family: Arial, sans-serif;
+    background: #0b1220;
+    color: #ffffff;
+    min-height: 100vh;
+}
 
-    status.textContent = "OFF";
-    status.classList.remove("on");
-    status.classList.add("off");
+.dashboard {
+    max-width: 1000px;
+    margin: auto;
+    padding: 30px 20px;
+}
 
-    house.classList.remove("lights-on");
-    houseStatus.textContent = "LIGHTS ARE OFF";
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #29364a;
+    gap: 10px;
+}
+
+.logo {
+    font-size: 20px;
+    font-weight: bold;
+    color: #93c5fd;
+}
+
+.online {
+    color: #facc15;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.welcome {
+    text-align: center;
+    margin: 45px 0 30px;
+}
+
+.welcome p {
+    color: #94a3b8;
+    margin: 10px;
+}
+
+.welcome h1 {
+    font-size: 38px;
+    color: #ffffff;
+}
+
+.house-card,
+.control-card {
+    background: #172338;
+    border: 1px solid #293b55;
+    border-radius: 20px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 10px 30px #0004;
+}
+
+.house-card {
+    text-align: center;
+}
+
+.house-card h2,
+.control-card h2 {
+    font-size: 20px;
+    margin-bottom: 8px;
+}
+
+.house-card p,
+.control-card p {
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.house {
+    max-width: 550px;
+    margin: 20px auto;
+}
+
+.house svg {
+    width: 100%;
+    display: block;
+}
+
+.window-light {
+    fill: #263b5c;
+    transition: fill 0.4s, filter 0.4s;
+}
+
+.house.lights-on .window-light {
+    fill: #facc15;
+    filter: drop-shadow(0 0 12px #facc15);
+}
+
+.house-status {
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+.control-card {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.status {
+    font-size: 25px;
+    font-weight: bold;
+}
+
+.status.off {
+    color: #ef4444;
+}
+
+.status.on {
+    color: #22c55e;
+}
+
+.buttons {
+    display: flex;
+    gap: 15px;
+}
+
+button {
+    flex: 1;
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.15);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.on-btn {
+    background: #16a34a;
+}
+
+.off-btn {
+    background: #dc2626;
+}
+
+.message-status {
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+footer {
+    text-align: center;
+    color: #64748b;
+    font-size: 12px;
+    padding: 20px;
+}
+
+@media (max-width: 600px) {
+    .welcome h1 {
+        font-size: 28px;
+    }
+
+    .dashboard {
+        padding: 15px;
+    }
+
+    .house-card,
+    .control-card {
+        padding: 18px;
+    }
+
+    .buttons {
+        flex-direction: column;
+    }
 }
