@@ -1,0 +1,330 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Home Control</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+      padding: 25px;
+    }
+
+    .container {
+      max-width: 850px;
+      margin: auto;
+    }
+
+    header {
+      margin-bottom: 25px;
+    }
+
+    header h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      color: #64748b;
+    }
+
+    .status-card,
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 22px;
+      margin-bottom: 20px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.05);
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .status {
+      padding: 7px 13px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: bold;
+      background: #e2e8f0;
+      color: #475569;
+    }
+
+    .status.online {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .status.offline {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .ac-image {
+      width: 100%;
+      height: 230px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin: 18px 0;
+      background: #e2e8f0;
+    }
+
+    .card h2 {
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+
+    .temperature {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .temperature strong {
+      font-size: 42px;
+      color: #0284c7;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      margin: 20px 0;
+      accent-color: #0284c7;
+      cursor: pointer;
+    }
+
+    .temp-range {
+      display: flex;
+      justify-content: space-between;
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    button {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 9px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      color: white;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .on-button {
+      background: #16a34a;
+    }
+
+    .off-button {
+      background: #dc2626;
+    }
+
+    .device-state {
+      margin-top: 15px;
+      color: #64748b;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 15px;
+      }
+
+      header h1 {
+        font-size: 23px;
+      }
+
+      .buttons {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <header>
+      <h1>Smart Home Control</h1>
+      <p>ระบบควบคุมบ้านอัจฉริยะ</p>
+    </header>
+
+    <!-- ESP32 CONNECTION -->
+    <section class="status-card">
+      <div class="status-row">
+        <strong>ESP32 Connection</strong>
+        <span id="connectionStatus" class="status">
+          CONNECTING
+        </span>
+      </div>
+    </section>
+
+    <!-- AIR CONDITIONER -->
+    <section class="card">
+      <h2>Air Conditioner</h2>
+
+      <img
+        class="ac-image"
+        src="https://images.unsplash.com/photo-1631545806609-7c2c1d1c7f8b?auto=format&fit=crop&w=1200&q=80"
+        alt="เครื่องปรับอากาศภายในบ้าน"
+        onerror="this.style.display='none'"
+      >
+
+      <div class="temperature">
+        <strong id="tempValue">25</strong>
+        <span>°C</span>
+      </div>
+
+      <input
+        type="range"
+        id="temperature"
+        min="16"
+        max="30"
+        value="25"
+      >
+
+      <div class="temp-range">
+        <span>16°C</span>
+        <span>30°C</span>
+      </div>
+
+      <p class="device-state">
+        Temperature setting (Simulation)
+      </p>
+
+      <div class="buttons">
+        <button class="on-button" id="onButton" onclick="controlLED(true)">
+          POWER ON
+        </button>
+
+        <button class="off-button" id="offButton" onclick="controlLED(false)">
+          POWER OFF
+        </button>
+      </div>
+
+      <p class="device-state" id="deviceState">
+        LED Status: Unknown
+      </p>
+    </section>
+
+  </div>
+
+  <script>
+    const temperature = document.getElementById("temperature");
+    const tempValue = document.getElementById("tempValue");
+
+    const connectionStatus =
+      document.getElementById("connectionStatus");
+
+    const deviceState =
+      document.getElementById("deviceState");
+
+    const onButton = document.getElementById("onButton");
+    const offButton = document.getElementById("offButton");
+
+    // Temperature simulation
+    temperature.addEventListener("input", function () {
+      tempValue.textContent = this.value;
+    });
+
+    // Check ESP32 connection
+    async function checkConnection() {
+      try {
+        const response = await fetch("/api/status");
+
+        if (!response.ok) {
+          throw new Error("Server unavailable");
+        }
+
+        const data = await response.json();
+
+        connectionStatus.textContent =
+          data.online ? "ONLINE" : "OFFLINE";
+
+        connectionStatus.className =
+          data.online ? "status online" : "status offline";
+
+        if (data.led !== undefined) {
+          deviceState.textContent =
+            "LED Status: " + (data.led ? "ON" : "OFF");
+        }
+
+        onButton.disabled = !data.online;
+        offButton.disabled = !data.online;
+
+      } catch (error) {
+        connectionStatus.textContent = "OFFLINE";
+        connectionStatus.className = "status offline";
+        deviceState.textContent = "Cannot connect to ESP32";
+
+        onButton.disabled = true;
+        offButton.disabled = true;
+      }
+    }
+
+    // Control LED through server
+    async function controlLED(state) {
+      try {
+        onButton.disabled = true;
+        offButton.disabled = true;
+
+        const response = await fetch("/api/device/command", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            led: state ? "ON" : "OFF"
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error("Command failed");
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+          deviceState.textContent =
+            "LED Status: " + (state ? "ON" : "OFF");
+        } else {
+          deviceState.textContent = "Command was not completed";
+        }
+
+      } catch (error) {
+        deviceState.textContent = "Unable to control LED";
+      }
+
+      checkConnection();
+    }
+
+    // Check connection every 3 seconds
+    checkConnection();
+    setInterval(checkConnection, 3000);
+  </script>
+
+</body>
+</html>
