@@ -1,177 +1,191 @@
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";
+
+// ต้องใช้ Topic เดียวกันทั้งเว็บไซต์และ ESP32
+const TOPIC_SET =
+    "school-project/khemmachatnt2004/led26-7f3c91a2/set";
+
+const TOPIC_STATE =
+    "school-project/khemmachatnt2004/led26-7f3c91a2/state";
+
+// HTML elements
+const status = document.getElementById("status");
+const house = document.querySelector(".house");
+const houseStatus = document.getElementById("houseStatus");
+
+const connection =
+    document.getElementById("mqttConnection");
+
+const messageStatus =
+    document.getElementById("messageStatus");
+
+const onButton =
+    document.getElementById("onButton");
+
+const offButton =
+    document.getElementById("offButton");
+
+// Initial interface
+function updateLight(isOn) {
+
+    status.textContent = isOn ? "ON" : "OFF";
+
+    status.classList.toggle("on", isOn);
+    status.classList.toggle("off", !isOn);
+
+    house.classList.toggle("lights-on", isOn);
+
+    houseStatus.textContent =
+        isOn ? "LIGHTS ARE ON" : "LIGHTS ARE OFF";
 }
 
-body {
-    font-family: Arial, sans-serif;
-    background: #0b1220;
-    color: #ffffff;
-    min-height: 100vh;
-}
+// MQTT connection
+const client = mqtt.connect(BROKER_URL, {
 
-.dashboard {
-    max-width: 1000px;
-    margin: auto;
-    padding: 30px 20px;
-}
+    clientId: "SmartHomeWeb_" +
+        Math.random().toString(16).substring(2, 10),
 
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 0;
-    border-bottom: 1px solid #29364a;
-}
+    clean: true,
 
-.logo {
-    font-size: 20px;
-    font-weight: bold;
-    color: #93c5fd;
-}
+    connectTimeout: 10000,
 
-.online {
-    color: #22c55e;
-    font-size: 12px;
-}
+    reconnectPeriod: 3000,
 
-.welcome {
-    text-align: center;
-    margin: 45px 0 30px;
-}
+    keepalive: 30
+});
 
-.welcome p {
-    color: #94a3b8;
-    margin: 10px;
-}
+// Connected
+client.on("connect", function () {
 
-.welcome h1 {
-    font-size: 38px;
-    color: #ffffff;
-}
+    console.log("MQTT Connected!");
 
-.house-card,
-.control-card {
-    background: #172338;
-    border: 1px solid #293b55;
-    border-radius: 20px;
-    padding: 25px;
-    margin-bottom: 25px;
-    box-shadow: 0 10px 30px #0004;
-}
+    connection.textContent = "● MQTT CONNECTED";
+    connection.style.color = "#22c55e";
 
-.house-card {
-    text-align: center;
-}
+    messageStatus.textContent =
+        "Connected. Waiting for ESP32...";
 
-.house-card h2,
-.control-card h2 {
-    font-size: 20px;
-    margin-bottom: 8px;
-}
+    client.subscribe(TOPIC_STATE, function (error) {
 
-.house-card p,
-.control-card p {
-    color: #94a3b8;
-    font-size: 14px;
-}
+        if (error) {
+            console.error("Subscribe error:", error);
 
-.house {
-    max-width: 550px;
-    margin: 20px auto;
-}
+            messageStatus.textContent =
+                "Failed to subscribe to ESP32.";
+        } else {
+            messageStatus.textContent =
+                "Connected. Waiting for LED status...";
+        }
 
-.house svg {
-    width: 100%;
-    display: block;
-}
+    });
 
-.window-light {
-    fill: #263b5c;
-    transition: fill 0.4s, filter 0.4s;
-}
+});
 
-.house.lights-on .window-light {
-    fill: #facc15;
-    filter: drop-shadow(0 0 12px #facc15);
-}
+// Reconnecting
+client.on("reconnect", function () {
 
-.house-status {
-    color: #94a3b8;
-    font-size: 13px;
-    font-weight: bold;
-    letter-spacing: 2px;
-}
+    connection.textContent = "● RECONNECTING...";
+    connection.style.color = "#facc15";
 
-.control-card {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
+});
 
-.status {
-    font-size: 25px;
-    font-weight: bold;
-}
+// Offline
+client.on("offline", function () {
 
-.status.off {
-    color: #ef4444;
-}
+    connection.textContent = "● OFFLINE";
+    connection.style.color = "#ef4444";
 
-.status.on {
-    color: #22c55e;
-}
+});
 
-.buttons {
-    display: flex;
-    gap: 15px;
-}
+// Error
+client.on("error", function (error) {
 
-button {
-    flex: 1;
-    padding: 16px;
-    border: none;
-    border-radius: 12px;
-    color: white;
-    font-size: 15px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.2s;
-}
+    console.error("MQTT Error:", error);
 
-button:hover {
-    transform: translateY(-2px);
-    filter: brightness(1.15);
-}
+    connection.textContent = "● CONNECTION ERROR";
+    connection.style.color = "#ef4444";
 
-.on-btn {
-    background: #16a34a;
-}
+});
 
-.off-btn {
-    background: #dc2626;
-}
+// Receive actual LED status from ESP32
+client.on("message", function (topic, message) {
 
-footer {
-    text-align: center;
-    color: #64748b;
-    font-size: 12px;
-    padding: 20px;
-}
+    if (topic === TOPIC_STATE) {
 
-@media (max-width: 600px) {
-    .welcome h1 {
-        font-size: 28px;
+        const state = message.toString();
+
+        console.log("ESP32 LED STATUS:", state);
+
+        if (state === "ON") {
+
+            updateLight(true);
+
+            messageStatus.textContent =
+                "ESP32 confirmed: LED ON";
+
+        }
+
+        else if (state === "OFF") {
+
+            updateLight(false);
+
+            messageStatus.textContent =
+                "ESP32 confirmed: LED OFF";
+
+        }
+
     }
 
-    .dashboard {
-        padding: 15px;
+});
+
+// Send command to ESP32
+function sendCommand(command) {
+
+    if (!client.connected) {
+
+        messageStatus.textContent =
+            "Error: MQTT is not connected!";
+
+        alert("Website is not connected to MQTT.");
+
+        return;
     }
 
-    .house-card,
-    .control-card {
-        padding: 18px;
-    }
+    messageStatus.textContent =
+        "Sending command: " + command;
+
+    client.publish(
+        TOPIC_SET,
+        command,
+        { qos: 0, retain: false },
+        function (error) {
+
+            if (error) {
+
+                console.error("Publish error:", error);
+
+                messageStatus.textContent =
+                    "Failed to send command.";
+
+            } else {
+
+                console.log("Command sent:", command);
+
+                messageStatus.textContent =
+                    "Command sent. Waiting for ESP32...";
+            }
+
+        }
+    );
+
+}
+
+// POWER ON
+function turnOn() {
+    sendCommand("ON");
+}
+
+// POWER OFF
+function turnOff() {
+    sendCommand("OFF");
 }
