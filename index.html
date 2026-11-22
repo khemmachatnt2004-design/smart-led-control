@@ -1,0 +1,36 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart LED Control</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <div class="icon">💡</div>
+
+        <h1>SMART LED CONTROL</h1>
+        <p class="subtitle">ESP32 LED CONTROL SYSTEM</p>
+
+        <div class="led-card">
+            <h2>LED MODULE</h2>
+
+            <div id="status" class="status off">
+                LED OFF
+            </div>
+
+            <div class="buttons">
+                <button class="on-btn" onclick="turnOn()">ON</button>
+                <button class="off-btn" onclick="turnOff()">OFF</button>
+            </div>
+        </div>
+
+        <p class="footer">Smart Home Project | ESP32</p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
